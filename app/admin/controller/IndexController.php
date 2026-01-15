@@ -28,7 +28,7 @@ class IndexController
 //            echo "hello coroutine\n";
 //        });
 //        return response('hello webman');
-        return json(['code' => 0, 'msg' => 'ok', 'c'=>$this->config->getDebug()]);
+        return json(['code' => 0, 'msg' => 'ok', 'data'=>$data, 'c'=>$this->config->getDebug()]);
     }
 
     #[Route('GET', '/admin/view/{name}', 'admin.view')]

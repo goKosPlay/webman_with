@@ -23,7 +23,6 @@ class Validator
         $reflection = new ReflectionClass($dto);
         
         foreach ($reflection->getProperties() as $property) {
-            $property->setAccessible(true);
             $value = $property->getValue($dto);
             $fieldName = $property->getName();
             

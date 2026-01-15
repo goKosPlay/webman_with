@@ -69,6 +69,23 @@ return [
 //            'publicPath' => public_path()
 //        ]
 //    ],
+//    'swow-coroutine' => [
+//        'handler' => Http::class,
+//        'listen' => 'http://0.0.0.0:8888',
+//        'count' => cpu_count(),
+//        'user' => '',
+//        'group' => '',
+//        'reusePort' => false,
+//        // 开启协程需要设置为 Workerman\Events\Swoole::class 或者 Workerman\Events\Swow::class 或者 Workerman\Events\Fiber::class
+//        'eventLoop' => Workerman\Events\Swow::class,
+//        'context' => [],
+//        'constructor' => [
+//            'requestClass' => Request::class,
+//            'logger' => Log::channel('default'),
+//            'appPath' => app_path(),
+//            'publicPath' => public_path()
+//        ]
+//    ],
     // File update detection and automatic reload
     'monitor' => [
         'handler' => app\process\Monitor::class,

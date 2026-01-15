@@ -18,7 +18,7 @@ return  [
             'options'   => [
                 \PDO::ATTR_EMULATE_PREPARES   => false,   // 必须关闭，使用真预处理语句
                 \PDO::ATTR_TIMEOUT            => 3,       // 连接超时 3秒
-                \PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci",
+//                \PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci",
                 \PDO::ATTR_PERSISTENT         => false,   // 不要用 PDO 自带持久连接
             ],
             // 连接池配置（webman/database 内置，支持 Swoole/Swow 协程）

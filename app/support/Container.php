@@ -188,7 +188,6 @@ class Container
             $type = $property->getType();
             
             if ($type && !$type->isBuiltin()) {
-                $property->setAccessible(true);
                 try {
                     $dependency = $this->make($type->getName());
                     $property->setValue($instance, $dependency);
@@ -200,7 +199,6 @@ class Container
             }
         } elseif (!empty($inject)) {
             $attr = $inject[0]->newInstance();
-            $property->setAccessible(true);
             
             $name = $attr->name;
             if ($name === null) {
@@ -220,7 +218,6 @@ class Container
             }
         } elseif (!empty($lazy)) {
             $attr = $lazy[0]->newInstance();
-            $property->setAccessible(true);
             
             $service = $attr->service;
             if ($service === null) {
@@ -234,7 +231,6 @@ class Container
             }
         } elseif (!empty($value)) {
             $attr = $value[0]->newInstance();
-            $property->setAccessible(true);
             
             $configValue = $this->getConfigValue($attr->key, $attr->default);
             $property->setValue($instance, $configValue);
