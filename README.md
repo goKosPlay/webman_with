@@ -1,70 +1,163 @@
-<div style="padding:18px;max-width: 1024px;margin:0 auto;background-color:#fff;color:#333">
-<h1>webman</h1>
+# Webman Project Template
 
-基于<a href="https://www.workerman.net" target="__blank">workerman</a>开发的超高性能PHP框架
+基于 **webman** 的高性能 PHP 应用模板，内置 **属性驱动的依赖注入、事件、队列、异步、缓存、定时任务**，以及 **多 Provider 短信服务**，开箱即用。
 
+---
 
-<h1>学习</h1>
+## ✨ 核心特性
 
-<ul>
-  <li>
-    <a href="https://www.workerman.net/webman" target="__blank">主页 / Home page</a>
-  </li>
-  <li>
-    <a href="https://webman.workerman.net" target="__blank">文档 / Document</a>
-  </li>
-  <li>
-    <a href="https://www.workerman.net/doc/webman/install.html" target="__blank">安装 / Install</a>
-  </li>
-  <li>
-    <a href="https://www.workerman.net/questions" target="__blank">问答 / Questions</a>
-  </li>
-  <li>
-    <a href="https://www.workerman.net/apps" target="__blank">市场 / Apps</a>
-  </li>
-  <li>
-    <a href="https://www.workerman.net/sponsor" target="__blank">赞助 / Sponsors</a>
-  </li>
-  <li>
-    <a href="https://www.workerman.net/doc/webman/thanks.html" target="__blank">致谢 / Thanks</a>
-  </li>
-</ul>
+### 🚀 多 Provider 短信服务
+- **统一接口**：`SmsProviderInterface`，支持自由文本与模板短信
+- **内置 Provider**：`log`（开发日志）、`custom_http`（自建网关）、`aliyun`、`tencentcloud`、`twilio`
+- **自动 fallback**：可配置默认 provider + 备用链，或调用时指定多 provider 顺序
+- **使用示例**
+  ```php
+  $this->smsService->sendOtp('08123456789', '123456'); // 默认
+  $this->smsService->send('08123456789', 'hello', null, 'aliyun,tencentcloud,twilio'); // 多 fallback
+  ```
 
-<div style="float:left;padding-bottom:30px;">
+### 🧩 属性驱动架构
+- **依赖注入**：`#[Service]` + `#[Autowired]`，自动扫描注册
+- **路由**：`#[RestController]` + `#[GetMapping]` / `#[PostMapping]`
+- **事件监听**：`#[EventListener]`，自动绑定
+- **缓存**：`#[Cacheable]` / `#[CacheEvict]`，声明式缓存
+- **异步**：`#[Async]`，后台任务
+- **定时任务**：`#[Scheduled]`，Cron 表达式
 
-  <h1>赞助商</h1>
+### 📦 队列系统
+- **任务类**：`#[Job]` 标记，自动注册
+- **多队列**：支持 `default`、`emails`、`images`、`reports`、`exports`
+- **Worker**：内置多进程消费，支持失败重试
 
-  <h4>特别赞助</h4>
-  <a href="https://www.crmeb.com/?form=workerman" target="__blank">
-    <img src="https://www.workerman.net/img/sponsors/6429/20230719111500.svg" width="200">
-  </a>
+### 📝 日志与监控
+- **结构化日志**：`Log::info('event', $context)`
+- **日志通道**：可配置多 channel
+- **异常追踪**：自动记录堆栈与上下文
 
-  <h4>铂金赞助</h4>
-  <a href="https://www.fadetask.com/?from=workerman" target="__blank"><img src="https://www.workerman.net/img/sponsors/1/20230719084316.png" width="200"></a>
-  <a href="https://www.yilianyun.net/?from=workerman" target="__blank" style="margin-left:20px;"><img src="https://www.workerman.net/img/sponsors/6218/20230720114049.png" width="200"></a>
+---
 
+## 🛠 快速开始
 
-</div>
+### 1) 环境与安装
+```bash
+composer install
+cp .env.example .env  # 配置数据库等
+php webman start
+```
 
+### 2) 添加自己的 Service
+```php
+<?php
+namespace app\service;
 
-<div style="float:left;padding-bottom:30px;clear:both">
+use app\attribute\dependency\Service;
 
-  <h1>请作者喝咖啡</h1>
+#[Service]
+class MyService
+{
+    public function hello(): string
+    {
+        return 'Hello, Webman!';
+    }
+}
+```
 
-<img src="https://www.workerman.net/img/wx_donate.png" width="200">
-<img src="https://www.workerman.net/img/ali_donate.png" width="200">
-<br>
-<b>如果您觉得webman对您有所帮助，欢迎捐赠。</b>
+### 3) 在 Controller 里注入
+```php
+<?php
+namespace app\front\controller;
 
+use app\attribute\dependency\Autowired;
+use app\service\MyService;
 
-</div>
+#[RestController('/api')]
+class DemoController
+{
+    #[Autowired]
+    private MyService $myService;
 
+    #[GetMapping('/hello')]
+    public function hello()
+    {
+        return json(['msg' => $this->myService->hello()]);
+    }
+}
+```
 
-<div style="clear: both">
-<h1>LICENSE</h1>
-The webman is open-sourced software licensed under the MIT.
-</div>
+### 4) 发送短信（示例）
+```php
+// 验证码（OTP）
+$this->smsService->sendOtp('08123456789', '123456');
 
-</div>
+// 指定多 provider 顺序
+$this->smsService->send('08123456789', 'hello', null, 'aliyun,tencentcloud,twilio');
+```
 
+---
 
+## 📁 目录结构（关键部分）
+
+```
+app/
+ ├─ attribute/          # PHP 8 属性定义
+ ├─ service/            # 业务服务层
+ │   ├─ sms/           # SMS Provider 实现
+ │   └─ *.php
+ ├─ controller/        # 控制器
+ ├─ model/             # Eloquent 模型
+ ├─ listener/          # 事件监听器
+ ├─ job/               # 队列任务
+ ├─ task/              # 定时任务
+ └─ support/           # 框架扩展（DI、事件、缓存、异步、队列等）
+
+config/
+ ├─ sms.php            # SMS Provider 配置
+ ├─ database.php       # 数据库配置
+ └─ *.php
+```
+
+---
+
+## ⚙️ 配置要点
+
+### SMS Service 配置（`config/sms.php`）
+```php
+'default_provider' => 'log',
+'fallback_providers' => ['aliyun', 'tencentcloud', 'twilio'],
+'providers' => [
+    'aliyun' => [
+        'class' => \app\service\sms\AliyunSmsProvider::class,
+        'options' => [
+            'access_key_id' => '',
+            'access_key_secret' => '',
+            'sign_name' => '',
+            'template_code' => '',
+        ],
+    ],
+    // ... tencentcloud / twilio / custom_http
+],
+```
+
+---
+
+## 📚 更多文档
+
+- **属性驱动指南**：`ATTRIBUTES_INTEGRATION.md`
+- **依赖注入**：`DEPENDENCY_INJECTION_GUIDE.md`
+- **事件监听**：`EVENT_LISTENER_GUIDE.md`
+- **队列**：`QUEUE_GUIDE.md`
+- **定时任务**：`SCHEDULED_TASK_GUIDE.md`
+- **异步**：`ASYNC_GUIDE.md`
+- **缓存**：`CACHE_GUIDE.md`
+- **验证**：`VALIDATION_GUIDE.md`
+- **日志**：`PHP8_LOGGING_ATTRIBUTES_GUIDE.md`
+
+---
+
+## 📄 License
+
+MIT License
+
+---
+
+> 本模板基于 **webman**，并扩展了属性驱动的现代化开发体验。欢迎提交 Issue 与 PR。
