@@ -412,6 +412,7 @@ class Container
         $this->instance($className, $instance);
         
         // Register beans defined in the configuration
+        $cache = $this->attributeCache;
         foreach ($reflector->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
             $beanAttrs = $cache->getMethodAttributes($method, Bean::class);
             
