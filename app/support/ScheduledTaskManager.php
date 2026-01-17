@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\support;
 
 use app\attribute\schedule\Scheduled;
@@ -14,6 +16,12 @@ class ScheduledTaskManager
     protected array $tasks = [];
     protected array $timers = [];
     protected array $scannedFiles = [];
+    protected AttributeCache $attributeCache;
+    
+    private function __construct()
+    {
+        $this->attributeCache = AttributeCache::getInstance();
+    }
     
     public static function getInstance(): self
     {
@@ -72,11 +80,11 @@ class ScheduledTaskManager
     protected function registerClass(ReflectionClass $reflector): void
     {
         foreach ($reflector->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
-            $attributes = $method->getAttributes(Scheduled::class);
+            $attributes = $this->attributeCache->getMethodAttributes($method, Scheduled::class);
             
             foreach ($attributes as $attribute) {
                 try {
-                    $scheduled = $attribute->newInstance();
+                    $scheduled = $this->attributeCache->getAttributeInstance($attribute);
                     
                     if (!$scheduled->enabled) {
                         continue;

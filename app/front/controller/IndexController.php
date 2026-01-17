@@ -1,5 +1,5 @@
 <?php
-
+declare(strict_types=1);
 namespace app\front\controller;
 
 use app\attribute\dependency\RestController;

@@ -1,14 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\attribute\validation;
 
 use Attribute;
 
-#[Attribute(Attribute::TARGET_PARAMETER | Attribute::TARGET_PROPERTY | Attribute::IS_REPEATABLE)]
+#[Attribute(Attribute::TARGET_PARAMETER | Attribute::TARGET_PROPERTY)]
 class Pattern
 {
     public function __construct(
-        public string $pattern,
-        public ?string $message = null
+        public readonly string $pattern,
+        public readonly ?string $message = null
     ) {}
 }

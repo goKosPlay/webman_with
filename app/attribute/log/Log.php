@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\attribute\log;
 
 use Attribute;
@@ -8,13 +10,13 @@ use Attribute;
 class Log
 {
     public function __construct(
-        public string $message = '',
-        public string $level = 'info',
-        public ?string $channel = null,
-        public array $context = [],
-        public bool $includeParams = false,
-        public bool $includeResult = false,
-        public bool $before = false,
-        public bool $after = true
+        public readonly string $message = '',
+        public readonly string $level = 'info',
+        public readonly ?string $channel = null,
+        public readonly array $context = [],
+        public readonly bool $includeParams = false,
+        public readonly bool $includeResult = false,
+        public readonly bool $before = false,
+        public readonly bool $after = true
     ) {}
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\support;
 
 use app\attribute\dependency\{
@@ -31,6 +33,12 @@ class Container
     protected array $aliases = [];
     protected array $resolved = [];
     protected array $lazyProxies = [];
+    protected AttributeCache $attributeCache;
+    
+    private function __construct()
+    {
+        $this->attributeCache = AttributeCache::getInstance();
+    }
     
     public static function getInstance(): self
     {
@@ -178,13 +186,14 @@ class Container
     
     protected function injectProperty(object $instance, ReflectionProperty $property): void
     {
-        $autowired = $property->getAttributes(Autowired::class);
-        $inject = $property->getAttributes(Inject::class);
-        $lazy = $property->getAttributes(Lazy::class);
-        $value = $property->getAttributes(Value::class);
+        $cache = $this->attributeCache;
+        $autowired = $cache->getPropertyAttributes($property, Autowired::class);
+        $inject = $cache->getPropertyAttributes($property, Inject::class);
+        $lazy = $cache->getPropertyAttributes($property, Lazy::class);
+        $value = $cache->getPropertyAttributes($property, Value::class);
         
         if (!empty($autowired)) {
-            $attr = $autowired[0]->newInstance();
+            $attr = $cache->getAttributeInstance($autowired[0]);
             $type = $property->getType();
             
             if ($type && !$type->isBuiltin()) {
@@ -198,7 +207,7 @@ class Container
                 }
             }
         } elseif (!empty($inject)) {
-            $attr = $inject[0]->newInstance();
+            $attr = $cache->getAttributeInstance($inject[0]);
             
             $name = $attr->name;
             if ($name === null) {
@@ -217,7 +226,7 @@ class Container
                 }
             }
         } elseif (!empty($lazy)) {
-            $attr = $lazy[0]->newInstance();
+            $attr = $cache->getAttributeInstance($lazy[0]);
             
             $service = $attr->service;
             if ($service === null) {
@@ -230,7 +239,7 @@ class Container
                 $property->setValue($instance, $proxy);
             }
         } elseif (!empty($value)) {
-            $attr = $value[0]->newInstance();
+            $attr = $cache->getAttributeInstance($value[0]);
             
             $configValue = $this->getConfigValue($attr->key, $attr->default);
             $property->setValue($instance, $configValue);
@@ -346,22 +355,23 @@ class Container
     
     protected function registerClass(ReflectionClass $reflector): void
     {
-        $service = $reflector->getAttributes(Service::class);
-        $component = $reflector->getAttributes(Component::class);
-        $repository = $reflector->getAttributes(Repository::class);
-        $configuration = $reflector->getAttributes(Configuration::class);
+        $cache = $this->attributeCache;
+        $service = $cache->getClassAttributes($reflector, Service::class);
+        $component = $cache->getClassAttributes($reflector, Component::class);
+        $repository = $cache->getClassAttributes($reflector, Repository::class);
+        $configuration = $cache->getClassAttributes($reflector, Configuration::class);
 
         
         if (!empty($service)) {
-            $attr = $service[0]->newInstance();
+            $attr = $cache->getAttributeInstance($service[0]);
             $isSingleton = $attr->singleton;
             $name = $attr->name;
         } elseif (!empty($component)) {
-            $attr = $component[0]->newInstance();
+            $attr = $cache->getAttributeInstance($component[0]);
             $isSingleton = $attr->singleton;
             $name = $attr->name;
         } elseif (!empty($repository)) {
-            $attr = $repository[0]->newInstance();
+            $attr = $cache->getAttributeInstance($repository[0]);
             $isSingleton = $attr->singleton;
             $name = $attr->name;
         } elseif (!empty($configuration)) {
@@ -373,9 +383,9 @@ class Container
         
         $className = $reflector->getName();
         
-        $scope = $reflector->getAttributes(Scope::class);
+        $scope = $cache->getClassAttributes($reflector, Scope::class);
         if (!empty($scope)) {
-            $scopeAttr = $scope[0]->newInstance();
+            $scopeAttr = $cache->getAttributeInstance($scope[0]);
             if ($scopeAttr->value === Scope::SINGLETON) {
                 $isSingleton = true;
             } elseif ($scopeAttr->value === Scope::PROTOTYPE) {
@@ -403,10 +413,10 @@ class Container
         
         // Register beans defined in the configuration
         foreach ($reflector->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
-            $beanAttrs = $method->getAttributes(Bean::class);
+            $beanAttrs = $cache->getMethodAttributes($method, Bean::class);
             
             foreach ($beanAttrs as $beanAttr) {
-                $bean = $beanAttr->newInstance();
+                $bean = $cache->getAttributeInstance($beanAttr);
                 $beanInstance = $method->invoke($instance);
                 
                 $name = $bean->name ?? $method->getName();

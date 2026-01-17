@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\attribute\event;
 
 use Attribute;
@@ -7,12 +9,12 @@ use Attribute;
 #[Attribute(Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
 class EventListener
 {
+    public readonly array $events;
+    
     public function __construct(
-        public string|array $events,
-        public int $priority = 0
+        string|array $events,
+        public readonly int $priority = 0
     ) {
-        if (is_string($this->events)) {
-            $this->events = [$this->events];
-        }
+        $this->events = is_array($events) ? $events : [$events];
     }
 }

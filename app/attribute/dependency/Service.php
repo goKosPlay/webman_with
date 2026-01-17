@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\attribute\dependency;
 
 use Attribute;
@@ -8,7 +10,7 @@ use Attribute;
 class Service
 {
     public function __construct(
-        public ?string $name = null,
-        public bool $singleton = true
+        public readonly ?string $name = null,
+        public readonly bool $singleton = true
     ) {}
 }

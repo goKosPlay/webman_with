@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\support;
 
 use app\attribute\log\{Loggable, Log, LogPerformance, LogException, LogContext};
@@ -11,7 +13,13 @@ use support\Log as BaseLog;
 class LogInterceptor
 {
     protected static ?self $instance = null;
+    protected AttributeCache $attributeCache;
     protected array $context = [];
+    
+    private function __construct()
+    {
+        $this->attributeCache = AttributeCache::getInstance();
+    }
     
     public static function getInstance(): self
     {
@@ -105,9 +113,9 @@ class LogInterceptor
         $methodSignature = $this->getMethodSignature($method);
         
         // 处理 Log 属性
-        $logAttrs = $method->getAttributes(Log::class);
+        $logAttrs = $this->attributeCache->getMethodAttributes($method, Log::class);
         foreach ($logAttrs as $attr) {
-            $log = $attr->newInstance();
+            $log = $this->attributeCache->getAttributeInstance($attr);
             if ($log->before) {
                 $logData = $context;
                 if ($log->includeParams) {
@@ -118,8 +126,8 @@ class LogInterceptor
         }
         
         // 处理 LogPerformance 属性
-        $perfAttrs = $method->getAttributes(LogPerformance::class);
-        $performance = !empty($perfAttrs) ? $perfAttrs[0]->newInstance() : null;
+        $perfAttrs = $this->attributeCache->getMethodAttributes($method, LogPerformance::class);
+        $performance = !empty($perfAttrs) ? $this->attributeCache->getAttributeInstance($perfAttrs[0]) : null;
         
         try {
             $result = $method->invokeArgs($instance, $params);
@@ -127,7 +135,7 @@ class LogInterceptor
             
             // 处理 Log 属性（after）
             foreach ($logAttrs as $attr) {
-                $log = $attr->newInstance();
+                $log = $this->attributeCache->getAttributeInstance($attr);
                 if ($log->after) {
                     $logData = $context;
                     if ($log->includeParams) {
@@ -149,9 +157,9 @@ class LogInterceptor
             
         } catch (\Throwable $e) {
             // 处理 LogException 属性
-            $exceptionAttrs = $method->getAttributes(LogException::class);
+            $exceptionAttrs = $this->attributeCache->getMethodAttributes($method, LogException::class);
             foreach ($exceptionAttrs as $attr) {
-                $exception = $attr->newInstance();
+                $exception = $this->attributeCache->getAttributeInstance($attr);
                 $exceptionData = array_merge($context, [
                     'exception' => get_class($e),
                     'message' => $e->getMessage(),
@@ -214,9 +222,9 @@ class LogInterceptor
         
         // 从方法参数收集 LogContext
         foreach ($method->getParameters() as $param) {
-            $contextAttrs = $param->getAttributes(LogContext::class);
+            $contextAttrs = $this->attributeCache->getParameterAttributes($param, LogContext::class);
             if (!empty($contextAttrs)) {
-                $logContext = $contextAttrs[0]->newInstance();
+                $logContext = $this->attributeCache->getAttributeInstance($contextAttrs[0]);
                 $paramIndex = $param->getPosition();
                 $paramValue = $params[$paramIndex] ?? null;
                 
@@ -231,9 +239,9 @@ class LogInterceptor
         }
         
         // 从方法收集 LogContext
-        $methodContextAttrs = $method->getAttributes(LogContext::class);
+        $methodContextAttrs = $this->attributeCache->getMethodAttributes($method, LogContext::class);
         foreach ($methodContextAttrs as $attr) {
-            $logContext = $attr->newInstance();
+            $logContext = $this->attributeCache->getAttributeInstance($attr);
             $context = array_merge($context, $logContext->context);
         }
         

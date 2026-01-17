@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\support;
 
 use app\attribute\async\Async;
@@ -13,6 +15,12 @@ class AsyncManager
 {
     protected static ?self $instance = null;
     protected array $asyncMethods = [];
+    protected AttributeCache $attributeCache;
+    
+    private function __construct()
+    {
+        $this->attributeCache = AttributeCache::getInstance();
+    }
     
     public static function getInstance(): self
     {
@@ -79,11 +87,11 @@ class AsyncManager
                 continue;
             }
             
-            $attributes = $method->getAttributes(Async::class);
+            $attributes = $this->attributeCache->getMethodAttributes($method, Async::class);
             
             foreach ($attributes as $attribute) {
                 try {
-                    $asyncAttr = $attribute->newInstance();
+                    $asyncAttr = $this->attributeCache->getAttributeInstance($attribute);
                     
                     $key = $class->getName() . '::' . $method->getName();
                     $this->asyncMethods[$key] = [

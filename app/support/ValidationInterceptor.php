@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\support;
 
 use app\attribute\validation\{
@@ -14,6 +16,12 @@ use ReflectionParameter;
 class ValidationInterceptor
 {
     protected array $errors = [];
+    protected AttributeCache $attributeCache;
+    
+    public function __construct()
+    {
+        $this->attributeCache = AttributeCache::getInstance();
+    }
     
     /**
      * 验证方法参数
@@ -40,11 +48,11 @@ class ValidationInterceptor
      */
     protected function validateParameter(ReflectionParameter $parameter, mixed $value): bool
     {
-        $attributes = $parameter->getAttributes();
+        $attributes = $this->attributeCache->getParameterAttributes($parameter);
         $paramName = $parameter->getName();
         
         foreach ($attributes as $attribute) {
-            $instance = $attribute->newInstance();
+            $instance = $this->attributeCache->getAttributeInstance($attribute);
             
             $result = match (true) {
                 $instance instanceof Required => $this->validateRequired($value, $instance),

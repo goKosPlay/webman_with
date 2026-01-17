@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\support;
 
 use app\attribute\event\EventListener;
@@ -11,6 +13,12 @@ class EventListenerManager
 {
     protected static ?self $instance = null;
     protected array $listeners = [];
+    protected AttributeCache $attributeCache;
+    
+    private function __construct()
+    {
+        $this->attributeCache = AttributeCache::getInstance();
+    }
     
     public static function getInstance(): self
     {
@@ -62,11 +70,11 @@ class EventListenerManager
     protected function registerClass(ReflectionClass $reflector): void
     {
         foreach ($reflector->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
-            $attributes = $method->getAttributes(EventListener::class);
+            $attributes = $this->attributeCache->getMethodAttributes($method, EventListener::class);
             
             foreach ($attributes as $attribute) {
                 try {
-                    $listener = $attribute->newInstance();
+                    $listener = $this->attributeCache->getAttributeInstance($attribute);
                     $this->registerListener($reflector, $method, $listener);
                 } catch (\Exception $e) {
                     error_log("EventListenerManager: Failed to register listener {$reflector->getName()}::{$method->getName()}: " . $e->getMessage());

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\attribute\routing;
 
 use Attribute;
@@ -8,8 +10,8 @@ use Attribute;
 class PutMapping
 {
     public function __construct(
-        public string $path = '',
-        public ?string $name = null,
-        public array $middleware = []
+        public readonly string $path = '',
+        public readonly ?string $name = null,
+        public readonly array $middleware = []
     ) {}
 }

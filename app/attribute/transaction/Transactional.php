@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\attribute\transaction;
 
 use Attribute;
@@ -8,9 +10,9 @@ use Attribute;
 class Transactional
 {
     public function __construct(
-        public ?string $connection = null,
-        public int $isolation = 0,
-        public int $timeout = -1,
-        public bool $readOnly = false
+        public readonly ?string $connection = null,
+        public readonly int $isolation = 0,
+        public readonly int $timeout = -1,
+        public readonly bool $readOnly = false
     ) {}
 }

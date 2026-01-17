@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\attribute\routing;
 
 use Attribute;
@@ -7,6 +9,8 @@ use Attribute;
 #[Attribute(Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
 class Route
 {
+    public readonly array $methods;
+    
     /**
      * @param string|array $methods HTTP methods (GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD, ANY)
      * @param string $path Route path (e.g., '/user/{id}')
@@ -14,17 +18,15 @@ class Route
      * @param array $middleware Middleware list
      */
     public function __construct(
-        public string|array $methods = 'GET',
-        public string $path = '',
-        public ?string $name = null,
-        public array $middleware = []
+        string|array $methods = 'GET',
+        public readonly string $path = '',
+        public readonly ?string $name = null,
+        public readonly array $middleware = []
     ) {
-        if (is_string($this->methods)) {
-            $this->methods = strtoupper($this->methods) === 'ANY' 
-                ? ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']
-                : [strtoupper($this->methods)];
-        } else {
-            $this->methods = array_map('strtoupper', $this->methods);
-        }
+        $this->methods = match(true) {
+            is_array($methods) => array_map('strtoupper', $methods),
+            strtoupper($methods) === 'ANY' => ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'],
+            default => [strtoupper($methods)]
+        };
     }
 }

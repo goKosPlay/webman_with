@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\support;
 
 use app\attribute\cache\{Cacheable, CachePut, CacheEvict};
@@ -10,7 +12,13 @@ use support\Redis;
 class CacheManager
 {
     protected static ?self $instance = null;
+    protected AttributeCache $attributeCache;
     protected array $handlers = [];
+    
+    private function __construct()
+    {
+        $this->attributeCache = AttributeCache::getInstance();
+    }
     
     public static function getInstance(): self
     {
@@ -22,13 +30,13 @@ class CacheManager
     
     public function handleCacheable(object $instance, ReflectionMethod $method, array $args): mixed
     {
-        $attributes = $method->getAttributes(Cacheable::class);
+        $attributes = $this->attributeCache->getMethodAttributes($method, Cacheable::class);
         
         if (empty($attributes)) {
             return $method->invoke($instance, ...$args);
         }
         
-        $attr = $attributes[0]->newInstance();
+        $attr = $this->attributeCache->getAttributeInstance($attributes[0]);
         
         if ($attr->condition && !$this->evaluateCondition($attr->condition, $args)) {
             return $method->invoke($instance, ...$args);
@@ -58,13 +66,13 @@ class CacheManager
     {
         $result = $method->invoke($instance, ...$args);
         
-        $attributes = $method->getAttributes(CachePut::class);
+        $attributes = $this->attributeCache->getMethodAttributes($method, CachePut::class);
         
         if (empty($attributes)) {
             return $result;
         }
         
-        $attr = $attributes[0]->newInstance();
+        $attr = $this->attributeCache->getAttributeInstance($attributes[0]);
         
         if ($attr->condition && !$this->evaluateCondition($attr->condition, $args)) {
             return $result;
@@ -84,13 +92,13 @@ class CacheManager
     
     public function handleCacheEvict(object $instance, ReflectionMethod $method, array $args): mixed
     {
-        $attributes = $method->getAttributes(CacheEvict::class);
+        $attributes = $this->attributeCache->getMethodAttributes($method, CacheEvict::class);
         
         if (empty($attributes)) {
             return $method->invoke($instance, ...$args);
         }
         
-        $attr = $attributes[0]->newInstance();
+        $attr = $this->attributeCache->getAttributeInstance($attributes[0]);
         
         if ($attr->beforeInvocation) {
             $this->evictCache($attr, $method, $args);

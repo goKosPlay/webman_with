@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\support;
 
 use app\attribute\routing\{
@@ -25,6 +27,8 @@ class AttributeRouteLoader
      */
     protected static bool $loaded = false;
     
+    protected static AttributeCache $attributeCache;
+    
     /**
      * Scan and register routes from controllers with Route attributes
      * 
@@ -38,6 +42,7 @@ class AttributeRouteLoader
             return;
         }
         self::$loaded = true;
+        self::$attributeCache = AttributeCache::getInstance();
         
         if ($directories === null) {
             $baseDir = base_path() . '/app';
@@ -115,20 +120,21 @@ class AttributeRouteLoader
         $classPrefix = '';
         $classMiddleware = [];
         
-        $controllerAttrs = $class->getAttributes(Controller::class);
-        $restControllerAttrs = $class->getAttributes(RestController::class);
-        $requestMappingAttrs = $class->getAttributes(RequestMapping::class);
+        $cache = self::$attributeCache;
+        $controllerAttrs = $cache->getClassAttributes($class, Controller::class);
+        $restControllerAttrs = $cache->getClassAttributes($class, RestController::class);
+        $requestMappingAttrs = $cache->getClassAttributes($class, RequestMapping::class);
         
         if (!empty($controllerAttrs)) {
-            $ctrl = $controllerAttrs[0]->newInstance();
+            $ctrl = $cache->getAttributeInstance($controllerAttrs[0]);
             $classPrefix = $ctrl->prefix;
             $classMiddleware = $ctrl->middleware;
         } elseif (!empty($restControllerAttrs)) {
-            $ctrl = $restControllerAttrs[0]->newInstance();
+            $ctrl = $cache->getAttributeInstance($restControllerAttrs[0]);
             $classPrefix = $ctrl->prefix;
             $classMiddleware = $ctrl->middleware;
         } elseif (!empty($requestMappingAttrs)) {
-            $ctrl = $requestMappingAttrs[0]->newInstance();
+            $ctrl = $cache->getAttributeInstance($requestMappingAttrs[0]);
             $classPrefix = $ctrl->path;
             $classMiddleware = $ctrl->middleware;
         }
@@ -141,18 +147,18 @@ class AttributeRouteLoader
             }
             
             $routeAttributes = array_merge(
-                $method->getAttributes(RouteAttribute::class),
-                $method->getAttributes(RequestMapping::class),
-                $method->getAttributes(GetMapping::class),
-                $method->getAttributes(PostMapping::class),
-                $method->getAttributes(PutMapping::class),
-                $method->getAttributes(DeleteMapping::class),
-                $method->getAttributes(PatchMapping::class)
+                $cache->getMethodAttributes($method, RouteAttribute::class),
+                $cache->getMethodAttributes($method, RequestMapping::class),
+                $cache->getMethodAttributes($method, GetMapping::class),
+                $cache->getMethodAttributes($method, PostMapping::class),
+                $cache->getMethodAttributes($method, PutMapping::class),
+                $cache->getMethodAttributes($method, DeleteMapping::class),
+                $cache->getMethodAttributes($method, PatchMapping::class)
             );
             
             foreach ($routeAttributes as $attribute) {
                 try {
-                    $routeAttr = $attribute->newInstance();
+                    $routeAttr = $cache->getAttributeInstance($attribute);
                     
                     // 使用闭包包装，支持依赖注入
                     $className = $class->getName();

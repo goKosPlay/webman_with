@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\attribute\cache;
 
 use Attribute;
@@ -8,10 +10,10 @@ use Attribute;
 class Cacheable
 {
     public function __construct(
-        public ?string $key = null,
-        public ?int $ttl = 3600,
-        public ?string $store = null,
-        public ?string $condition = null,
-        public ?string $unless = null
+        public readonly ?string $key = null,
+        public readonly ?int $ttl = 3600,
+        public readonly ?string $store = null,
+        public readonly ?string $condition = null,
+        public readonly ?string $unless = null
     ) {}
 }

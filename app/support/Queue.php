@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\support;
 
 use app\attribute\queue\QueueJob;
@@ -15,6 +17,12 @@ class Queue
     protected array $queues = [];
     protected array $jobs = [];
     protected array $jobClasses = [];
+    protected AttributeCache $attributeCache;
+    
+    private function __construct()
+    {
+        $this->attributeCache = AttributeCache::getInstance();
+    }
     
     public static function getInstance(): self
     {
@@ -48,10 +56,10 @@ class Queue
         if (class_exists($jobClass)) {
             try {
                 $reflection = new ReflectionClass($jobClass);
-                $attributes = $reflection->getAttributes(QueueJob::class);
+                $attributes = $this->attributeCache->getClassAttributes($reflection, QueueJob::class);
                 
                 if (!empty($attributes)) {
-                    $queueJobAttr = $attributes[0]->newInstance();
+                    $queueJobAttr = $this->attributeCache->getAttributeInstance($attributes[0]);
                     $job['queue'] = $queue ?? $queueJobAttr->queue;
                     $job['max_retries'] = $queueJobAttr->maxRetries;
                     $job['timeout'] = $queueJobAttr->timeout;
@@ -229,10 +237,10 @@ class Queue
     {
         try {
             $reflection = new ReflectionClass($className);
-            $attributes = $reflection->getAttributes(QueueJob::class);
+            $attributes = $this->attributeCache->getClassAttributes($reflection, QueueJob::class);
             
             if (!empty($attributes)) {
-                $this->jobClasses[$className] = $attributes[0]->newInstance();
+                $this->jobClasses[$className] = $this->attributeCache->getAttributeInstance($attributes[0]);
             }
         } catch (\Exception $e) {
             error_log("Queue: Failed to register job class {$className}: " . $e->getMessage());
