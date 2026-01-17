@@ -14,10 +14,10 @@
 
 return [
     'default' => [
-        'password' => '',
-        'host' => '127.0.0.1',
-        'port' => 6379,
-        'database' => 0,
+        'password' => getenv('REDIS_PASSWORD'),
+        'host' => getenv('REDIS_HOST'),
+        'port' => getenv('REDIS_PORT'),
+        'database' => getenv('REDIS_DB'),
         'pool' => [
             'max_connections' => 5,
             'min_connections' => 1,
